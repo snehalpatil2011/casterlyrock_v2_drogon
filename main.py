@@ -8,6 +8,7 @@ app =  FastAPI()
 
 @app.get("/")
 async def health_check():
+    print("Webhook Triggered")
     return "The health check is Successfull !"
 
 
