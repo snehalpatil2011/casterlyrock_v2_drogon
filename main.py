@@ -11,7 +11,7 @@ class Message(BaseModel):
 
 @app.get("/")
 async def health_check():
-    print("Webhook Triggered")
+    print("Health Check called !")
     return "The health check is Successfull !"
 
 @app.post("/placeorder/")
