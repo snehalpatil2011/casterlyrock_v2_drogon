@@ -12,7 +12,7 @@ async def health_check():
     return "The health check is Successfull !"
 
 @app.post("/placeorder")
-async def place_order():
+async def place_order(data):
     print("Webhook Triggered: Order Placer")
     return "Order Placer called"
 
