@@ -87,7 +87,8 @@ class InitiateFyers:
 
     def inititate_fyers(self):
         token = self.get_token()
-        fyers = fyersModel.FyersModel(client_id=self.__client_id, token=token, log_path=os.getcwd())
+        #fyers = fyersModel.FyersModel(client_id=self.__client_id, token=token, log_path=os.getcwd())
+        fyers = fyersModel.FyersModel(client_id=self.__client_id, token=token)
         return fyers
     
 if __name__ == '__main__':
