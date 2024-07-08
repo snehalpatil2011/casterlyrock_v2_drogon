@@ -23,13 +23,13 @@ class PlaceOrder():
             "type":1,
             "side":1,
             "productType":"BO",
-            "limitPrice": premium + 2,
+            "limitPrice": round(premium + 2),
             "stopPrice": 0,
             "validity":"DAY",
             "disclosedQty":0,
-            "offlineOrder":True,
-            "stopLoss": orderDetails.stop_loss,
-            "takeProfit": premium + take_profit
+            "offlineOrder":False,
+            "stopLoss": round(orderDetails.stop_loss),
+            "takeProfit": round(premium + take_profit)
         }
         print(data)
         response = self.fyers_model.place_order(data=data)
