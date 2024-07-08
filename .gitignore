@@ -1,3 +1,5 @@
 .vercel
 .venv
 __pycache__
+fyersApi.log
+fyersRequests.log

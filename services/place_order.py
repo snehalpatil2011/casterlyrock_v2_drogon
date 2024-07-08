@@ -28,8 +28,8 @@ class PlaceOrder():
             "validity":"DAY",
             "disclosedQty":0,
             "offlineOrder":False,
-            "stopLoss": round(orderDetails.stop_loss),
-            "takeProfit": round(premium + take_profit)
+            "stopLoss": round(stop_loss_in_point),
+            "takeProfit": round(take_profit)
         }
         print(data)
         response = self.fyers_model.place_order(data=data)
