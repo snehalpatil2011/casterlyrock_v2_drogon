@@ -17,4 +17,10 @@ class OrderDetails(BaseModel):
     symbol: str
     stop_loss: int
 
-    
+class TwinTowerDetails(BaseModel):
+    startDate : str
+    endDate : str
+
+class OrderBankNiftyFutureDetails(BaseModel):
+    symbol: str
+    signalType: str

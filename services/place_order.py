@@ -1,7 +1,9 @@
 from services.initiate_fyers import InitiateFyers
 from services.util import get_account_balance, find_premium_price, Calculate_positon_size
 from services.models.enumeration import FundBalanceType
-from services.models.fyers_response_model import OrderDetails 
+from services.models.fyers_response_model import OrderDetails,OrderBankNiftyFutureDetails
+from datetime import datetime,timedelta
+import time
 
 class PlaceOrder():
 
@@ -35,6 +37,114 @@ class PlaceOrder():
         response = self.fyers_model.place_order(data=data)
         print(response)
         return response
+    
+    #read file
+    def twinTowerGenerator(self,timeperiod, daysOffset) -> None:
+        print("STARTED :  Twin Tower Gnerator")
+        self.fyers_model = InitiateFyers().inititate_fyers()
+
+        #Identify start and end date
+        startDateDerived = datetime.today().strftime('%Y-%m-%d')
+        print(f"Derived Start Date = {startDateDerived}")
+        endDateDerived = (datetime.today() - timedelta(days=daysOffset)).strftime('%Y-%m-%d')
+        print(f"Derived End Date = {endDateDerived}")
+
+        input_stock_file = open("stock_list.txt","r")
+        file_content = input_stock_file.readline()
+        symbols = file_content.split(",")
+        #print(symbols)
+        idenitfied_symbols_pp = []
+        for symbol in symbols:
+            time.sleep(0.2)
+            print(f"Processing Symbol = {symbol}")
+            #PlaceOrder().isTwinTower(symbol)
+            data = {
+                "symbol": symbol+"-EQ",
+                "resolution":timeperiod,
+                "date_format":"1",
+                "range_from": endDateDerived,
+                "range_to": startDateDerived,
+                "cont_flag":"1"
+                }
+            response = self.fyers_model.history(data=data)
+            #print(response)
+            candles1 = response['candles']
+            candles = candles1[-11:]
+            candle_open = candles[len(candles)-1][1]
+            candle_close = candles[len(candles)-1][4]
+            up_day = True if candle_close > candle_open else False
+            down_day = True if candle_close <= candle_open else False
+            last_candleVolume = candles[len(candles) - 1][5]
+            #print(f"Most Recent Candle : Open = {candle_open}, Close = {candle_close}, Upday = {up_day},DownDay = {down_day},lastCandleVolume = {last_candleVolume}")
+            PPVol = 0
+            for i in range(len(candles) - 1):
+                candle_volume = candles[i][5]
+                if candles[len(candles) - 1][5] > candles[i][5]:
+                    PPVol = PPVol + 1
+                else:
+                    PPVol = 0
+                #print(f"Candle : Volume = {candle_volume}")
+                #print(f"Las Candle Volume = {candles[len(candles) - 1]}")
+            if PPVol == len(candles)-1 and up_day:
+                #print(f"{symbol} | PIVOT:True")
+                idenitfied_symbols_pp.append(symbol)
+        #print(idenitfied_symbols_pp)
+        return idenitfied_symbols_pp
+
+    def place_order_bank_nifty_future(self, orderBankNiftyFutureDetails: OrderBankNiftyFutureDetails) -> None:
+        print("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
+        LOT_SIZE = 15
+        self.fyers_model = InitiateFyers().inititate_fyers()
+        #DEFAULT = BUY
+        if orderBankNiftyFutureDetails.signalType == 'LONG_ENTRY' or orderBankNiftyFutureDetails.signalType == 'SHORT_EXIT' :
+            print("Preparing Buy Order")
+            #BUY_SIDE
+            data = {
+                "symbol": orderBankNiftyFutureDetails.symbol,
+                "qty": LOT_SIZE,
+                "type":2,
+                "side":1,
+                "productType":"INTRADAY",
+                "limitPrice":0,
+                "stopPrice":0,
+                "validity":"DAY",
+                "disclosedQty":0,
+                "offlineOrder":True,
+                "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
+            }
+            print(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            res = self.fyers_model.place_order(data=data)
+            print(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            return res
+
+        
+        if orderBankNiftyFutureDetails.signalType == 'SHORT_ENTRY' or orderBankNiftyFutureDetails.signalType == 'LONG_EXIT' :
+            #SELL SIDE
+            data = {
+                "symbol":orderBankNiftyFutureDetails.symbol,
+                "qty":LOT_SIZE,
+                "type":2,
+                "side":-1,
+                "productType":"INTRADAY",
+                "limitPrice":0,
+                "stopPrice":0,
+                "validity":"DAY",
+                "disclosedQty":0,
+                "offlineOrder":True,
+                "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
+            }
+            print(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            res = self.fyers_model.place_order(data=data)
+            print(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            return res
+
+    def get_account_details(self) -> None:
+        print("Inside : Handler Method - PlaceOrder().get_account_details()")
+        self.fyers_model = InitiateFyers().inititate_fyers()
+        res = self.fyers_model.funds()
+        print(res)
+        return res
+
 
 #obj = {
 #            "symbol":"NSE:BANKNIFTY2470352300PE",
@@ -42,3 +152,6 @@ class PlaceOrder():
 #        }
 #if __name__ == '__main__':
 #    PlaceOrder().place_order(obj)
+
+#if __name__ == '__main__':
+#    PlaceOrder().twinTowerGenerator()
