@@ -3,6 +3,7 @@ import discord
 from fastapi import FastAPI
 from bot import bot
 import uvicorn
+import os
 
 app = FastAPI()
 
@@ -12,7 +13,7 @@ async def read_root():
 
 @app.post("/send_message/")
 async def send_message(channel_id: int, message: str):
-    channel = bot.get_channel(channel_id)
+    channel = bot.get_channel(1267471110606290958)
     if channel:
         await channel.send(message)
         return {"status": "Message sent"}
@@ -20,7 +21,8 @@ async def send_message(channel_id: int, message: str):
         return {"status": "Channel not found"}
 
 async def start_bot():
-    await bot.start('ADD_SECRETE_HERE')
+    #await bot.start(os.environ.get('DISCORD_SECRETE'))
+    await bot.start('MTI2NzQ3NTA0OTA5MTMwNTQ5Mw.G7SELg.EfBp4gwKBjI5-WYYz31gCPZzDpiRCg9D506aKM')
 
 async def main():
     bot_task = asyncio.create_task(start_bot())
