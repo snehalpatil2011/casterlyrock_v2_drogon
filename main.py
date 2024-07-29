@@ -21,8 +21,7 @@ async def send_message(channel_id: int, message: str):
         return {"status": "Channel not found"}
 
 async def start_bot():
-    #await bot.start(os.environ.get('DISCORD_SECRETE'))
-    await bot.start('MTI2NzQ3NTA0OTA5MTMwNTQ5Mw.G7SELg.EfBp4gwKBjI5-WYYz31gCPZzDpiRCg9D506aKM')
+    await bot.start(os.environ.get('MY_WORD'))
 
 async def main():
     bot_task = asyncio.create_task(start_bot())
