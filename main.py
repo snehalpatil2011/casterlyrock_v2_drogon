@@ -20,7 +20,7 @@ async def send_message(channel_id: int, message: str):
         return {"status": "Channel not found"}
 
 async def start_bot():
-    await bot.start('ADD_TOKEN')
+    await bot.start('ADD_SECRETE_HERE')
 
 async def main():
     bot_task = asyncio.create_task(start_bot())
