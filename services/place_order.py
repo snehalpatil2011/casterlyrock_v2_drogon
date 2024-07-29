@@ -4,6 +4,10 @@ from services.models.enumeration import FundBalanceType
 from services.models.fyers_response_model import OrderDetails,OrderBankNiftyFutureDetails
 from datetime import datetime,timedelta
 import time
+import logging
+
+logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+
 
 class PlaceOrder():
 
@@ -92,7 +96,7 @@ class PlaceOrder():
         return idenitfied_symbols_pp
 
     def place_order_bank_nifty_future(self, orderBankNiftyFutureDetails: OrderBankNiftyFutureDetails) -> None:
-        print("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
+        logging.info("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
         LOT_SIZE = 15
         self.fyers_model = InitiateFyers().inititate_fyers()
         #DEFAULT = BUY
@@ -112,9 +116,9 @@ class PlaceOrder():
                 "offlineOrder":True,
                 "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
             }
-            print(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
-            print(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
             return res
 
         
@@ -133,16 +137,16 @@ class PlaceOrder():
                 "offlineOrder":True,
                 "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
             }
-            print(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
-            print(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
             return res
 
     def get_account_details(self) -> None:
-        print("Inside : Handler Method - PlaceOrder().get_account_details()")
+        logging.info("Inside : Handler Method - PlaceOrder().get_account_details()")
         self.fyers_model = InitiateFyers().inititate_fyers()
         res = self.fyers_model.funds()
-        print(res)
+        logging.info(f"RESULT(accountDetails): {res}")
         return res
 
 

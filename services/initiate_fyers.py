@@ -8,6 +8,9 @@ import time
 from urllib.parse import urlparse, parse_qs
 from pprint import pprint
 import requests
+import logging
+
+logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
 
 class InitiateFyers:
 
@@ -62,8 +65,8 @@ class InitiateFyers:
         request_key = r1.json()["request_key"]
         data2 = f'{{"request_key":"{request_key}","otp":{self.__totp(self.__totp_key)}}}'
         r2 = s.post("https://api-t2.fyers.in/vagator/v2/verify_otp", data=data2)
-        print("----------------------------------------------------")
-        print(r2)
+        #logging.info("----------------------------------------------------")
+        #logging.info(r2)
         assert r2.status_code == 200, f"Error in r2:\n {r2.text}"
 
         request_key = r2.json()["request_key"]
@@ -82,7 +85,7 @@ class InitiateFyers:
         session = fyersModel.SessionModel(client_id=self.__client_id, secret_key=self.__secret_key, redirect_uri=self.__redirect_uri, response_type="code", grant_type="authorization_code")
         session.set_token(auth_code)
         response = session.generate_token()
-        print(response["access_token"])
+        #logging.info(response["access_token"])
         return response["access_token"]
 
     def inititate_fyers(self):

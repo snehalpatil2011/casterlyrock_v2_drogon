@@ -5,3 +5,5 @@ fyersApi.log
 fyersRequests.log
 fyersApi.log
 fyersRequests.log
+casterlyrock_logger.log
+*.log
