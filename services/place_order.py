@@ -156,12 +156,6 @@ class PlaceOrder():
         logging.info(f"RESULT(accountDetails): {res}")
         await sendMessageToChannel(f"RESULT(accountDetails): {res}")
         return res
-    
-    async def getPositions(self) -> None:
-        logging.info("Inside : getPostions()")
-        self.fyers_model = InitiateFyers().inititate_fyers()
-        res = self.fyers_model.positions()
-        return res
 
 
 #obj = {

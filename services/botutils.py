@@ -26,7 +26,7 @@ class BotUtils():
             openPositionDetails.append(summary)
             result = '\n'.join(openPositionDetails)
 
-            now = datetime.now().strftime("%Y-%m-%d %H:%M")
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             messageColor = discord.Colour.red
             if res["overall"]['pl_unrealized'] > 0 :
                   messageColor = discord.Colour.green()
@@ -38,3 +38,12 @@ class BotUtils():
                   title=f"Score Board at {now}"
             )
             return embdedMessage
+    
+    async def refreshToken(self) -> None:
+          self.fyers_model = InitiateFyers().refreshToken()
+
+    async def kill(self) -> None:
+          self.fyers_model = InitiateFyers().inititate_fyers()
+          data = {}
+          res = self.fyers_model.exit_positions(data=data)
+          return res

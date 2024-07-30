@@ -9,6 +9,7 @@ from urllib.parse import urlparse, parse_qs
 from pprint import pprint
 import requests
 import logging
+import services.token as tokenProvider
 
 logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
 
@@ -56,6 +57,8 @@ class InitiateFyers:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
         }
 
+        logging.info("GET_TOKEN_CALLED")
+
         s = requests.Session()
         s.headers.update(headers)
 
@@ -89,10 +92,34 @@ class InitiateFyers:
         return response["access_token"]
 
     def inititate_fyers(self):
-        token = self.get_token()
-        #fyers = fyersModel.FyersModel(client_id=self.__client_id, token=token, log_path=os.getcwd())
-        fyers = fyersModel.FyersModel(client_id=self.__client_id, token=token)
-        return fyers
+        token = None
+        if tokenProvider.globalToken == None :
+            token = self.get_token()
+            tokenProvider.globalToken = token
+        else:
+            token = tokenProvider.globalToken
+
+        fyer = None
+        if tokenProvider.fyersModelObject == None :
+            fyer = fyersModel.FyersModel(client_id=self.__client_id, token=token)
+            tokenProvider.fyersModelObject = fyer
+        else:
+            fyer = tokenProvider.fyersModelObject
+        
+        return fyer
     
+    def refreshToken(self):
+        logging.info("REFRESHED_TOKEN_CALLED")
+        try:
+            tokenProvider.globalToken =  self.get_token()
+            fyersModel.FyersModel(client_id=self.__client_id, token=tokenProvider.globalToken)
+        except:
+            try:
+                time.sleep(5)
+                tokenProvider.globalToken =  self.get_token()
+                fyersModel.FyersModel(client_id=self.__client_id, token=tokenProvider.globalToken)
+            except:
+                logging.info("An exception occurred - While fetching the token")
+                    
 if __name__ == '__main__':
     InitiateFyers().inititate_fyers()
