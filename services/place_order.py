@@ -5,6 +5,7 @@ from services.models.fyers_response_model import OrderDetails,OrderBankNiftyFutu
 from datetime import datetime,timedelta
 import time
 import logging
+from services.bot import bot,sendMessageToChannel
 
 logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
 
@@ -95,8 +96,9 @@ class PlaceOrder():
         #print(idenitfied_symbols_pp)
         return idenitfied_symbols_pp
 
-    def place_order_bank_nifty_future(self, orderBankNiftyFutureDetails: OrderBankNiftyFutureDetails) -> None:
+    async def place_order_bank_nifty_future(self, orderBankNiftyFutureDetails: OrderBankNiftyFutureDetails) -> None:
         logging.info("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
+        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
         LOT_SIZE = 15
         self.fyers_model = InitiateFyers().inititate_fyers()
         #DEFAULT = BUY
@@ -113,12 +115,14 @@ class PlaceOrder():
                 "stopPrice":0,
                 "validity":"DAY",
                 "disclosedQty":0,
-                "offlineOrder":True,
+                "offlineOrder":False,
                 "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
             }
             logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
             logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
             return res
 
         
@@ -134,19 +138,29 @@ class PlaceOrder():
                 "stopPrice":0,
                 "validity":"DAY",
                 "disclosedQty":0,
-                "offlineOrder":True,
+                "offlineOrder":False,
                 "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
             }
             logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
             logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
             return res
 
-    def get_account_details(self) -> None:
+    async def get_account_details(self) -> None:
         logging.info("Inside : Handler Method - PlaceOrder().get_account_details()")
+        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().get_account_details()")
         self.fyers_model = InitiateFyers().inititate_fyers()
         res = self.fyers_model.funds()
         logging.info(f"RESULT(accountDetails): {res}")
+        await sendMessageToChannel(f"RESULT(accountDetails): {res}")
+        return res
+    
+    async def getPositions(self) -> None:
+        logging.info("Inside : getPostions()")
+        self.fyers_model = InitiateFyers().inititate_fyers()
+        res = self.fyers_model.positions()
         return res
 
 
