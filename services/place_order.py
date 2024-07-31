@@ -101,6 +101,22 @@ class PlaceOrder():
         await sendMessageToChannel("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
         LOT_SIZE = 15
         self.fyers_model = InitiateFyers().inititate_fyers()
+
+        #Verify Order Validity
+        positionsres = self.fyers_model.positions()
+        openPositionsCount = positionsres["overall"]['count_open']
+        if orderBankNiftyFutureDetails.signalType == 'LONG_ENTRY' or orderBankNiftyFutureDetails.signalType == 'SHORT_ENTRY':
+            if(openPositionsCount > 0):
+                logging.info(f"ISSUE: There was already a open position while serving request for {orderBankNiftyFutureDetails.signalType}. Hence we will discard the request")
+                await sendMessageToChannel(f"ISSUE: There was already a open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
+                return f"Request no Completed. As the Request for {orderBankNiftyFutureDetails.signalType} was incorrect."
+
+        if orderBankNiftyFutureDetails.signalType == 'LONG_EXIT' or orderBankNiftyFutureDetails.signalType == 'SHORT_EXIT':
+            if(openPositionsCount == 0):
+                logging.info(f"ISSUE: There were no open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
+                await sendMessageToChannel(f"ISSUE: There were no open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
+                return f"Request no Completed. As the Request for {orderBankNiftyFutureDetails.signalType} was incorrect."
+
         #DEFAULT = BUY
         if orderBankNiftyFutureDetails.signalType == 'LONG_ENTRY' or orderBankNiftyFutureDetails.signalType == 'SHORT_EXIT' :
             print("Preparing Buy Order")

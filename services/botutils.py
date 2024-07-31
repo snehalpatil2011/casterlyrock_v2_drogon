@@ -12,16 +12,33 @@ class BotUtils():
             logging.info("Inside : getPostions()")
             self.fyers_model = InitiateFyers().inititate_fyers()
             res = self.fyers_model.positions()
+            logging.info(f"Inside : getPostions(): Response = {res}")
+            MAX_LOSS_PERCENTAGE = 0.5
             openPositionDetails = []
             for position in res["netPositions"]:
-                  if position['realized_profit'] == 0 :
-                        direction = 'BUY'
-                        if position == 1:
+                  if position['qty'] != 0 :
+                        direction = 'LONG'
+                        if position['side'] == 1:
                               direction = 'LONG'
-                        elif position == -1:
-                            direction = 'SHORT'
+                              averageBuy = position['buyAvg']
+                              maxPossibleLossLong = (averageBuy * (MAX_LOSS_PERCENTAGE/100))*position['qty']
+                              if position['unrealized_profit'] < 0  and abs(position['unrealized_profit']) > maxPossibleLossLong:
+                                    logging.info("HARD SL on LONG Side")
+                                    data = {}
+                                    resExitPositions = self.fyers_model.exit_positions(data=data)
+
+                        elif position['side'] == -1:
+                              direction = 'SHORT'
+                              averageSell = position['sellAvg']
+                              maxPossibleLossShort = (averageSell * (MAX_LOSS_PERCENTAGE/100))*position['qty']
+                              if position['unrealized_profit'] < 0  and abs(position['unrealized_profit']) > maxPossibleLossShort:
+                                    logging.info("HARD SL on SHORT Side")
+                                    data = {}
+                                    resExitPositions = self.fyers_model.exit_positions(data=data)
+
                         positionDetails = f'{direction}-{position['symbol']} : {position['qty']} | {round(position['unrealized_profit'])}'
                         openPositionDetails.append(positionDetails)
+
 
             summary = f'''Total =  {round(res["overall"]['pl_total'])}, Realized = {round(res["overall"]['pl_realized'])},UnRealized = {round(res["overall"]['pl_unrealized'])}'''
             openPositionDetails.append(summary)
