@@ -1,11 +1,14 @@
 from services.initiate_fyers import InitiateFyers
-from services.util import get_account_balance, find_premium_price, Calculate_positon_size
+from services.util import get_account_balance, find_premium_price, Calculate_positon_size,calculate_total_quantity
 from services.models.enumeration import FundBalanceType
-from services.models.fyers_response_model import OrderDetails,OrderBankNiftyFutureDetails
+from services.models.fyers_response_model import OrderDetails,OrderPlacerInputPayload
+from services.initiate_delta_india import generate_signature
 from datetime import datetime,timedelta
 import time
 import logging
 from services.bot import bot,sendMessageToChannel
+import json
+import requests
 
 logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
 
@@ -96,34 +99,34 @@ class PlaceOrder():
         #print(idenitfied_symbols_pp)
         return idenitfied_symbols_pp
 
-    async def place_order_bank_nifty_future(self, orderBankNiftyFutureDetails: OrderBankNiftyFutureDetails) -> None:
-        logging.info("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
-        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().place_order_bank_nifty_future()")
-        LOT_SIZE = 15
+    async def order_placer_fyers_delegate(self, orderPlacerInputPayload: OrderPlacerInputPayload,rootSymbol: str) -> None:
+        logging.info("Inside : Handler Method - PlaceOrder().order_placer_fyers_delegate()")
+        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_fyers_delegate()")
+        quanity = calculate_total_quantity(rootSymbol,orderPlacerInputPayload.numberOfLots)
         self.fyers_model = InitiateFyers().inititate_fyers()
 
         #Verify Order Validity
         positionsres = self.fyers_model.positions()
         openPositionsCount = positionsres["overall"]['count_open']
-        if orderBankNiftyFutureDetails.signalType == 'LONG_ENTRY' or orderBankNiftyFutureDetails.signalType == 'SHORT_ENTRY':
+        if orderPlacerInputPayload.signalType == 'LONG_ENTRY' or orderPlacerInputPayload.signalType == 'SHORT_ENTRY':
             if(openPositionsCount > 0):
-                logging.info(f"ISSUE: There was already a open position while serving request for {orderBankNiftyFutureDetails.signalType}. Hence we will discard the request")
-                await sendMessageToChannel(f"ISSUE: There was already a open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
-                return f"Request no Completed. As the Request for {orderBankNiftyFutureDetails.signalType} was incorrect."
+                logging.info(f"ISSUE: There was already a open position while serving request for {orderPlacerInputPayload.signalType}. Hence we will discard the request")
+                await sendMessageToChannel(f"ISSUE: There was already a open position while serving request for {orderPlacerInputPayload.signalType}.Hence we will discard the request")
+                return f"Request no Completed. As the Request for {orderPlacerInputPayload.signalType} was incorrect."
 
-        if orderBankNiftyFutureDetails.signalType == 'LONG_EXIT' or orderBankNiftyFutureDetails.signalType == 'SHORT_EXIT':
+        if orderPlacerInputPayload.signalType == 'LONG_EXIT' or orderPlacerInputPayload.signalType == 'SHORT_EXIT':
             if(openPositionsCount == 0):
-                logging.info(f"ISSUE: There were no open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
-                await sendMessageToChannel(f"ISSUE: There were no open position while serving request for {orderBankNiftyFutureDetails.signalType}.Hence we will discard the request")
-                return f"Request no Completed. As the Request for {orderBankNiftyFutureDetails.signalType} was incorrect."
+                logging.info(f"ISSUE: There were no open position while serving request for {orderPlacerInputPayload.signalType}.Hence we will discard the request")
+                await sendMessageToChannel(f"ISSUE: There were no open position while serving request for {orderPlacerInputPayload.signalType}.Hence we will discard the request")
+                return f"Request no Completed. As the Request for {orderPlacerInputPayload.signalType} was incorrect."
 
         #DEFAULT = BUY
-        if orderBankNiftyFutureDetails.signalType == 'LONG_ENTRY' or orderBankNiftyFutureDetails.signalType == 'SHORT_EXIT' :
+        if orderPlacerInputPayload.signalType == 'LONG_ENTRY' or orderPlacerInputPayload.signalType == 'SHORT_EXIT' :
             print("Preparing Buy Order")
             #BUY_SIDE
             data = {
-                "symbol": orderBankNiftyFutureDetails.symbol,
-                "qty": LOT_SIZE,
+                "symbol": orderPlacerInputPayload.symbol,
+                "qty": quanity,
                 "type":2,
                 "side":1,
                 "productType":"INTRADAY",
@@ -131,22 +134,22 @@ class PlaceOrder():
                 "stopPrice":0,
                 "validity":"DAY",
                 "disclosedQty":0,
-                "offlineOrder":False,
-                "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
+                "offlineOrder":orderPlacerInputPayload.offlineOrder,
+                "orderTag":str.replace(orderPlacerInputPayload.signalType,"_","")
             }
-            logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
-            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            logging.info(f"Submitting BUY Order for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Order with Details : {data}")
+            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
-            logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
-            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            logging.info(f"Received Response after order submitted for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Response with Details : {res}")
+            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Response with Details : {res}")
             return res
 
         
-        if orderBankNiftyFutureDetails.signalType == 'SHORT_ENTRY' or orderBankNiftyFutureDetails.signalType == 'LONG_EXIT' :
+        if orderPlacerInputPayload.signalType == 'SHORT_ENTRY' or orderPlacerInputPayload.signalType == 'LONG_EXIT' :
             #SELL SIDE
             data = {
-                "symbol":orderBankNiftyFutureDetails.symbol,
-                "qty":LOT_SIZE,
+                "symbol":orderPlacerInputPayload.symbol,
+                "qty":quanity,
                 "type":2,
                 "side":-1,
                 "productType":"INTRADAY",
@@ -154,15 +157,45 @@ class PlaceOrder():
                 "stopPrice":0,
                 "validity":"DAY",
                 "disclosedQty":0,
-                "offlineOrder":False,
-                "orderTag":str.replace(orderBankNiftyFutureDetails.signalType,"_","")
+                "offlineOrder":orderPlacerInputPayload.offlineOrder,
+                "orderTag":str.replace(orderPlacerInputPayload.signalType,"_","")
             }
-            logging.info(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
-            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Order with Details : {data}")
+            logging.info(f"Submitting BUY Order for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Order with Details : {data}")
+            await sendMessageToChannel(f"Submitting BUY Order for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Order with Details : {data}")
             res = self.fyers_model.place_order(data=data)
-            logging.info(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
-            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderBankNiftyFutureDetails.symbol}] for Signal - [{orderBankNiftyFutureDetails.signalType}] Response with Details : {res}")
+            logging.info(f"Received Response after order submitted for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Response with Details : {res}")
+            await sendMessageToChannel(f"Received Response after order submitted for Symbol [{orderPlacerInputPayload.symbol}] for Signal - [{orderPlacerInputPayload.signalType}] Response with Details : {res}")
             return res
+
+    async def order_placer_delta_india_delegate(self, orderPlacerInputPayload: OrderPlacerInputPayload) -> None:
+        logging.info("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
+        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
+
+        # Prepare the order data
+        order_data = {
+            'product_id': 27,  # Product ID for BTCUSD is 27
+            'size': 1,
+            'order_type': 'market_order',
+            'side': 'buy'
+        }
+
+        body = json.dumps(order_data, separators=(',', ':'))
+        method = 'POST'
+        endpoint = '/v2/orders'
+        signature, timestamp = generate_signature(method, endpoint, body)
+        # Add the API key and signature to the request headers
+        headers = {
+            'api-key': "4eXPFPDEU7vhQzzKfUcqgimKa0GH0U",
+            'signature': signature,
+            'timestamp': timestamp,
+            'Content-Type': 'application/json'
+        }
+        response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
+        order_response = response.json()
+        print(order_response)
+        return order_response
+
+
 
     async def get_account_details(self) -> None:
         logging.info("Inside : Handler Method - PlaceOrder().get_account_details()")

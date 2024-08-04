@@ -21,6 +21,10 @@ class TwinTowerDetails(BaseModel):
     startDate : str
     endDate : str
 
-class OrderBankNiftyFutureDetails(BaseModel):
+class OrderPlacerInputPayload(BaseModel):
     symbol: str
     signalType: str
+    broker: str
+    offlineOrder:bool = False
+    exchange:str = "NSE"
+    numberOfLots:int = 1

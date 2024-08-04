@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from services.place_order import PlaceOrder
-from services.models.fyers_response_model import OrderDetails,TwinTowerDetails,OrderBankNiftyFutureDetails
+from services.models.fyers_response_model import OrderDetails,TwinTowerDetails,OrderPlacerInputPayload
 import uvicorn
 import asyncio
 import discord
@@ -9,6 +9,7 @@ from services.bot import bot,sendMessageToChannel
 import uvicorn
 import os
 import logging
+import services.symbol_mapper as symbolMapper
 
 logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
 
@@ -24,11 +25,11 @@ async def send_message(channel_id: int, message: str):
     await sendMessageToChannel(message)
     
 
-@app.post("/placeorder")
-async def place_order(orderDetails:OrderDetails):
-    logging.info(f"Webhook Triggered | Placing orders with details : Symbol :  {orderDetails.symbol} , SL : {orderDetails.stop_loss}")
-    resp = PlaceOrder().place_order(orderDetails)
-    return resp
+# @app.post("/placeorder")
+# async def place_order(orderDetails:OrderDetails):
+#     logging.info(f"Webhook Triggered | Placing orders with details : Symbol :  {orderDetails.symbol} , SL : {orderDetails.stop_loss}")
+#     resp = PlaceOrder().place_order(orderDetails)
+#     return resp
 
 @app.get("/twintowersdaily")
 async def generate_twin_towers():
@@ -36,12 +37,23 @@ async def generate_twin_towers():
     idenitfied_symbols_pp = PlaceOrder().twinTowerGenerator("D",20)
     return idenitfied_symbols_pp
 
-@app.post("/orderbankniftyfuture")
-async def place_order_bank_nifty_future(orderBankNiftyFutureDetails:OrderBankNiftyFutureDetails):
-    logging.info("Request Received : Place order for BANK NIFTY FUTURES")
-    placer = PlaceOrder()
-    res = await placer.place_order_bank_nifty_future(orderBankNiftyFutureDetails)
-    return res
+@app.post("/orderplacer")
+async def order_placer(orderPlacerInputPayload:OrderPlacerInputPayload):
+    if orderPlacerInputPayload.broker == "FYERS":
+        logging.info(f"Request Received : Place order for {orderPlacerInputPayload.symbol}")
+        logging.info(f"BROKER : {orderPlacerInputPayload.broker}")
+        rootSymbol = symbolMapper.get_root_symbol(orderPlacerInputPayload.symbol)
+        orderPlacerInputPayload.symbol = symbolMapper.convert_tradingview_to_fyers(orderPlacerInputPayload.symbol,orderPlacerInputPayload.exchange)
+        logging.info(f"SYMBOL CONVERSION : Coverted to FYERS and new value is {orderPlacerInputPayload.symbol}")
+        placer = PlaceOrder()
+        res = await placer.order_placer_fyers_delegate(orderPlacerInputPayload,rootSymbol)
+        return res
+    if orderPlacerInputPayload.broker == "DELTA_INDIA":
+        logging.info(f"Request Received : Place order for {orderPlacerInputPayload.symbol}")
+        logging.info(f"BROKER : {orderPlacerInputPayload.broker}")
+        placer = PlaceOrder()
+        res = await placer.order_placer_delta_india_delegate(orderPlacerInputPayload)
+        return res
 
 @app.get("/accountDetails")
 async def getAccountDetails():

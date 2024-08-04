@@ -1,5 +1,5 @@
 from services.initiate_fyers import InitiateFyers
-from services.models.fyers_response_model import FyersFundsResponse
+from services.models.fyers_response_model import FyersFundsResponse,OrderPlacerInputPayload
 from services.models.enumeration import FundBalanceType
 import logging
 logger = logging.getLogger()
@@ -36,3 +36,26 @@ def Calculate_positon_size(provided_sl, available_balance, last_traded_price):
 # account_balance = get_account_balance(FundBalanceType.AVAILABLE_BALANCE.value)
 # premium = find_premium_price( {"symbols":"NSE:BANKNIFTY2470352300PE"})
 # Calculate_positon_size(298, account_balance, premium)
+
+
+def calculate_total_quantity(symbol:str,numberOfLots:int):
+    # Extract the core symbol from the fyers symbol
+    # Assuming the format is always "Exchange:SymbolExtraInfo"
+    # Dictionary of known lot sizes
+    lot_sizes = {
+        "BANKNIFTY": 15,
+        "FINNIFTY": 25,
+        "MIDCPNIFTY": 50,
+        "NIFTY": 25
+    }
+    
+    # Normalize the symbol for lookup
+    symbol = symbol.upper()
+    lot_size = lot_sizes.get(symbol, None)
+    
+    if lot_size is not None:
+        total_quantity = lot_size * numberOfLots
+        return total_quantity
+    else:
+        # If no lot size is found, default to num_lots * 1
+        return numberOfLots * 1

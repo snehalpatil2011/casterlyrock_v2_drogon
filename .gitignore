@@ -8,3 +8,12 @@ fyersRequests.log
 casterlyrock_logger.log
 *.log
 test.json
+data_generation_5m/
+data_generation_1m/
+myenv/
+client.py
+combined_btc_data_1m.csv
+fyersApi.log
+fyersRequests.log
+payload_samples/
+.env
