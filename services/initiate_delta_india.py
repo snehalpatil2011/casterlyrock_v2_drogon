@@ -5,6 +5,7 @@ import time
 import requests
 from dotenv import load_dotenv
 import os
+import datetime
 
 load_dotenv()
 
@@ -20,3 +21,5 @@ def generate_signature(method, endpoint, payload):
     hash = hmac.new(secret, message, hashlib.sha256)
     return hash.hexdigest(), timestamp
 
+def getDeltaIndiaAPIKey():
+    return api_key

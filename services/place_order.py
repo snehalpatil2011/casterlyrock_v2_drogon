@@ -9,8 +9,11 @@ import logging
 from services.bot import bot,sendMessageToChannel
 import json
 import requests
+import os
+from dotenv import load_dotenv
 
 logging.basicConfig(filename='casterlyrock_logger.log', level=logging.DEBUG, format='%(asctime)s: %(levelname) -8s: - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+load_dotenv()
 
 
 class PlaceOrder():
@@ -169,31 +172,57 @@ class PlaceOrder():
 
     async def order_placer_delta_india_delegate(self, orderPlacerInputPayload: OrderPlacerInputPayload) -> None:
         logging.info("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
-        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
+        #await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
 
         # Prepare the order data
-        order_data = {
-            'product_id': 27,  # Product ID for BTCUSD is 27
-            'size': 1,
-            'order_type': 'market_order',
-            'side': 'buy'
-        }
+        #DEFAULT = BUY
+        if orderPlacerInputPayload.signalType == 'LONG_ENTRY' or orderPlacerInputPayload.signalType == 'SHORT_EXIT' :
+            order_data = {
+                'product_id': 27,  # Product ID for BTCUSD is 27
+                'size': orderPlacerInputPayload.numberOfLots,
+                'order_type': 'market_order',
+                'side': 'buy'
+            }
 
-        body = json.dumps(order_data, separators=(',', ':'))
-        method = 'POST'
-        endpoint = '/v2/orders'
-        signature, timestamp = generate_signature(method, endpoint, body)
-        # Add the API key and signature to the request headers
-        headers = {
-            'api-key': "4eXPFPDEU7vhQzzKfUcqgimKa0GH0U",
-            'signature': signature,
-            'timestamp': timestamp,
-            'Content-Type': 'application/json'
-        }
-        response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
-        order_response = response.json()
-        print(order_response)
-        return order_response
+            body = json.dumps(order_data, separators=(',', ':'))
+            method = 'POST'
+            endpoint = '/v2/orders'
+            signature, timestamp = generate_signature(method, endpoint, body)
+            # Add the API key and signature to the request headers
+            headers = {
+                'api-key': os.getenv('API_KEY_DELTA_INDIA'),
+                'signature': signature,
+                'timestamp': timestamp,
+                'Content-Type': 'application/json'
+            }
+            response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
+            order_response = response.json()
+            print(order_response)
+            return order_response
+        
+        if orderPlacerInputPayload.signalType == 'SHORT_ENTRY' or orderPlacerInputPayload.signalType == 'LONG_EXIT' :
+            order_data = {
+                'product_id': 27,  # Product ID for BTCUSD is 27
+                'size': orderPlacerInputPayload.numberOfLots,
+                'order_type': 'market_order',
+                'side': 'sell'
+            }
+
+            body = json.dumps(order_data, separators=(',', ':'))
+            method = 'POST'
+            endpoint = '/v2/orders'
+            signature, timestamp = generate_signature(method, endpoint, body)
+            # Add the API key and signature to the request headers
+            headers = {
+                'api-key': os.getenv('API_KEY_DELTA_INDIA'),
+                'signature': signature,
+                'timestamp': timestamp,
+                'Content-Type': 'application/json'
+            }
+            response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
+            order_response = response.json()
+            print(order_response)
+            return order_response
 
 
 
