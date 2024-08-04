@@ -172,7 +172,7 @@ class PlaceOrder():
 
     async def order_placer_delta_india_delegate(self, orderPlacerInputPayload: OrderPlacerInputPayload) -> None:
         logging.info("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
-        #await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
+        await sendMessageToChannel("Inside : Handler Method - PlaceOrder().order_placer_delta_india_delegate()")
 
         # Prepare the order data
         #DEFAULT = BUY
@@ -197,7 +197,8 @@ class PlaceOrder():
             }
             response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
             order_response = response.json()
-            print(order_response)
+            logging.info(order_response)
+            await sendMessageToChannel(order_response)
             return order_response
         
         if orderPlacerInputPayload.signalType == 'SHORT_ENTRY' or orderPlacerInputPayload.signalType == 'LONG_EXIT' :
@@ -221,7 +222,8 @@ class PlaceOrder():
             }
             response = requests.post('https://cdn.india.deltaex.org/v2/orders', headers=headers, data=body)
             order_response = response.json()
-            print(order_response)
+            logging.info(order_response)
+            await sendMessageToChannel(order_response)
             return order_response
 
 

@@ -42,6 +42,7 @@ async def order_placer(orderPlacerInputPayload:OrderPlacerInputPayload):
     if orderPlacerInputPayload.broker == "FYERS":
         logging.info(f"Request Received : Place order for {orderPlacerInputPayload.symbol}")
         logging.info(f"BROKER : {orderPlacerInputPayload.broker}")
+        orderPlacerInputPayload.symbol = orderPlacerInputPayload.symbol.replace(orderPlacerInputPayload.exchange + ":", "")
         rootSymbol = symbolMapper.get_root_symbol(orderPlacerInputPayload.symbol)
         orderPlacerInputPayload.symbol = symbolMapper.convert_tradingview_to_fyers(orderPlacerInputPayload.symbol,orderPlacerInputPayload.exchange)
         logging.info(f"SYMBOL CONVERSION : Coverted to FYERS and new value is {orderPlacerInputPayload.symbol}")
